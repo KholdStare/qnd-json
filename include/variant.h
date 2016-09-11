@@ -8,7 +8,7 @@ namespace qnd
 
     namespace detail
     {
-        template <typename> struct proxy{};
+        template <typename...> struct proxy{};
 
         template <typename...>
         union union_storage { };
@@ -43,22 +43,61 @@ namespace qnd
             T val_;
             union_storage<Rest...> rest_;
         };
+
+        struct destroyer
+        {
+            template <typename T>
+            void operator() (T& val)
+            {
+                val.~T();
+            }
+        };
     }
 
     template <typename... Types>
     class variant
     {
-        //template <typename T>
-        //variant(T val)
-            //: index(meta::index_of<T>::in<Types...>::value)
-            //, storage_(std::move(val))
-        //{ }
+    public:
+        template <typename T>
+        variant(T val)
+            : index(meta::index_of<T>::template in<Types...>::value)
+            , storage_(std::move(val))
+        { }
+
+        ~variant()
+        {
+            visit(detail::destroyer{});
+        }
+
+        template <typename F>
+        void visit(F&& f)
+        {
+            visit_impl(std::forward<F>(f), detail::proxy<Types...>{});
+        }
 
     private:
+        template <typename F>
+        void visit_impl(F&& f, detail::proxy<>)
+        {
+
+        }
+
+        template <typename F, typename T, typename... Rest>
+        void visit_impl(F&& f, detail::proxy<T, Rest...>)
+        {
+            constexpr const uint8_t current_index =
+                sizeof...(Types) - (sizeof...(Rest) + 1);
+            if (index == current_index)
+            {
+                return f(storage_.template get<T>());
+            }
+            else
+            {
+                return visit_impl(std::forward<F>(f), detail::proxy<Rest...>{});
+            }
+        }
+
         uint8_t index;
         detail::union_storage<Types...> storage_;
     };
-
-
-
 }

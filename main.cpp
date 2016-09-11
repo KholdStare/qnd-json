@@ -20,10 +20,26 @@ void example2()
     );
 }
 
+void example3()
+{
+    using my_variant = qnd::variant<std::string, double>;
+
+    my_variant v1{std::string{"Hello"}};
+    my_variant v2{3.14};
+
+    auto printer = [](auto& val) {
+        std::cout << val << std::endl;
+    };
+
+    v1.visit(printer);
+    v2.visit(printer);
+}
+
 int main(int argc, char* argv[])
 {
     example1();
     example2();
+    example3();
 
     return 0;
 }
