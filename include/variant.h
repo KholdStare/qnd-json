@@ -3,6 +3,8 @@
 #include <utility>
 #include <cstdint>
 #include <type_traits>
+#include <exception>
+#include <limits>
 
 namespace qnd
 {
@@ -83,9 +85,25 @@ namespace qnd
         };
     }
 
+    class bad_variant_access : public std::exception
+    {
+    public:
+        bad_variant_access() { }
+
+        const char* what() const noexcept override
+        {
+            return "bad_variant_access";
+        }
+    };
+
     template <typename... Types>
     class variant
     {
+        static_assert(
+            sizeof...(Types) < std::numeric_limits<uint8_t>::max(),
+            "Cannot store more than 255 alternatives"
+        );
+
     public:
         template <typename T>
         variant(T val)
@@ -102,16 +120,31 @@ namespace qnd
         {
             if (&other != this)
             {
-                // TODO: take care of the monostate if copy throws
                 visit(detail::destroyer{});
-                copy_from_other(other);
+                try
+                {
+                    copy_from_other(other);
+                }
+                catch (...)
+                {
+                    index = std::numeric_limits<uint8_t>::max();
+                    throw;
+                }
             }
             return *this;
         }
 
+        bool valueless_by_exception() const
+        {
+            return index >= sizeof...(Types);
+        }
+
         ~variant()
         {
-            visit(detail::destroyer{});
+            if (!valueless_by_exception())
+            {
+                visit(detail::destroyer{});
+            }
         }
 
         template <typename F>
@@ -137,7 +170,10 @@ namespace qnd
         }
 
         template <typename Self, typename F>
-        static void visit_impl(Self&& self, F&& f, detail::proxy<>) { }
+        static void visit_impl(Self&& self, F&& f, detail::proxy<>)
+        {
+            throw bad_variant_access();
+        }
 
         template <typename Self, typename F, typename T, typename... Rest>
         static void visit_impl(Self&& self, F&& f, detail::proxy<T, Rest...>)
