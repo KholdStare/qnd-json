@@ -117,13 +117,13 @@ namespace qnd
         template <typename F>
         void visit(F&& f)
         {
-            visit_impl(std::forward<F>(f), detail::proxy<Types...>{});
+            visit_impl(*this, std::forward<F>(f), detail::proxy<Types...>{});
         }
 
         template <typename F>
         void visit(F&& f) const
         {
-            visit_impl(std::forward<F>(f), detail::proxy<Types...>{});
+            visit_impl(*this, std::forward<F>(f), detail::proxy<Types...>{});
         }
 
     private:
@@ -136,40 +136,21 @@ namespace qnd
             });
         }
 
-        // TODO: de-duplicate
-        template <typename F>
-        void visit_impl(F&& f, detail::proxy<>) { }
+        template <typename Self, typename F>
+        static void visit_impl(Self&& self, F&& f, detail::proxy<>) { }
 
-        template <typename F>
-        void visit_impl(F&& f, detail::proxy<>) const { }
-
-        template <typename F, typename T, typename... Rest>
-        void visit_impl(F&& f, detail::proxy<T, Rest...>)
+        template <typename Self, typename F, typename T, typename... Rest>
+        static void visit_impl(Self&& self, F&& f, detail::proxy<T, Rest...>)
         {
             constexpr const uint8_t current_index =
                 sizeof...(Types) - (sizeof...(Rest) + 1);
-            if (index == current_index)
+            if (self.index == current_index)
             {
-                return f(storage_.template get<T>());
+                return f(self.storage_.template get<T>());
             }
             else
             {
-                return visit_impl(std::forward<F>(f), detail::proxy<Rest...>{});
-            }
-        }
-
-        template <typename F, typename T, typename... Rest>
-        void visit_impl(F&& f, detail::proxy<T, Rest...>) const
-        {
-            constexpr const uint8_t current_index =
-                sizeof...(Types) - (sizeof...(Rest) + 1);
-            if (index == current_index)
-            {
-                return f(storage_.template get<T>());
-            }
-            else
-            {
-                return visit_impl(std::forward<F>(f), detail::proxy<Rest...>{});
+                return visit_impl(std::forward<Self>(self), std::forward<F>(f), detail::proxy<Rest...>{});
             }
         }
 
