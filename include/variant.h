@@ -17,6 +17,9 @@ namespace qnd
         union union_storage<T, Rest...>
         {
         public:
+            union_storage()
+            { }
+
             union_storage(T val)
                 : val_(std::move(val))
             { }
@@ -32,13 +35,38 @@ namespace qnd
             U& get() { return get(proxy<U>{}); }
 
             template <typename U>
+            U const& get() const { return get(proxy<U>{}); }
+
+            template <typename U, typename... Args>
+            void emplace(Args&&... args)
+            {
+                emplace_impl(proxy<U>{}, std::forward<Args>(args)...);
+            }
+
+            template <typename U>
             void destroy() { get(proxy<U>{}).~U(); }
 
         private:
+            template <typename... Args>
+            void emplace_impl(proxy<T>, Args&&... args)
+            {
+                new (&val_) T(std::forward<Args>(args)...);
+            }
+
+            template <typename U, typename... Args>
+            void emplace_impl(proxy<U> p, Args&&... args)
+            {
+                rest_.template emplace<U>(std::forward<Args>(args)...);
+            }
+
             template <typename U>
             U& get(proxy<U>) { return rest_.template get<U>(); }
 
+            template <typename U>
+            U const& get(proxy<U>) const { return rest_.template get<U>(); }
+
             T& get(proxy<T>) { return val_; }
+            T const& get(proxy<T>) const { return val_; }
 
             T val_;
             union_storage<Rest...> rest_;

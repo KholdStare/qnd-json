@@ -35,11 +35,21 @@ void example3()
     v2.visit(printer);
 }
 
+void example4()
+{
+    qnd::detail::union_storage<std::string, double> test;
+    test.emplace<std::string>("Woohoo");
+    std::cout << test.get<std::string>() << std::endl;
+    test.destroy<std::string>();
+}
+
+
 int main(int argc, char* argv[])
 {
     example1();
     example2();
     example3();
+    example4();
 
     return 0;
 }
