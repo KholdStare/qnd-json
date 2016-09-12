@@ -1,5 +1,6 @@
 #include "include/variant.h"
 #include "include/meta.h"
+#include "include/json.h"
 #include <string>
 #include <iostream>
 
@@ -101,6 +102,16 @@ void example6()
     }
 }
 
+void example7()
+{
+    using namespace qnd;
+    json::Object obj = {
+        {"Key1", 3.14},
+        {"Key2", 42},
+        {"Key3", json::Array{"hello", 1.618, json::null}}
+    };
+}
+
 int main(int argc, char* argv[])
 {
     example1();
@@ -109,6 +120,7 @@ int main(int argc, char* argv[])
     example4();
     example5();
     example6();
+    example7();
 
     return 0;
 }
