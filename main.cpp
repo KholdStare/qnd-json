@@ -50,7 +50,7 @@ void example5()
     my_variant v1{std::string{"Example5"}};
     my_variant v2{3.14};
     my_variant v3{v2};
-    //v2 = v1;
+    v2 = v1;
 
     v1.visit(printer);
     v2.visit(printer);

@@ -94,12 +94,19 @@ namespace qnd
         { }
 
         variant(variant const& other)
-            : index(other.index)
         {
-            other.visit([this](auto const& val) {
-                using type = std::decay_t<decltype(val)>;
-                storage_.template emplace<type>(val);
-            });
+            copy_from_other(other);
+        }
+
+        variant& operator = (variant const& other)
+        {
+            if (&other != this)
+            {
+                // TODO: take care of the monostate if copy throws
+                visit(detail::destroyer{});
+                copy_from_other(other);
+            }
+            return *this;
         }
 
         ~variant()
@@ -120,6 +127,15 @@ namespace qnd
         }
 
     private:
+        void copy_from_other(variant const& other)
+        {
+            index = other.index;
+            other.visit([this](auto const& val) {
+                using type = std::decay_t<decltype(val)>;
+                storage_.template emplace<type>(val);
+            });
+        }
+
         // TODO: de-duplicate
         template <typename F>
         void visit_impl(F&& f, detail::proxy<>) { }
