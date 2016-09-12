@@ -20,16 +20,16 @@ void example2()
     );
 }
 
+auto printer = [](auto& val) {
+    std::cout << val << std::endl;
+};
+
 void example3()
 {
     using my_variant = qnd::variant<std::string, double>;
 
     my_variant v1{std::string{"Hello"}};
     my_variant v2{3.14};
-
-    auto printer = [](auto& val) {
-        std::cout << val << std::endl;
-    };
 
     v1.visit(printer);
     v2.visit(printer);
@@ -43,6 +43,19 @@ void example4()
     test.destroy<std::string>();
 }
 
+void example5()
+{
+    using my_variant = qnd::variant<std::string, double>;
+
+    my_variant v1{std::string{"Example5"}};
+    my_variant v2{3.14};
+    my_variant v3{v2};
+    //v2 = v1;
+
+    v1.visit(printer);
+    v2.visit(printer);
+    v3.visit(printer);
+}
 
 int main(int argc, char* argv[])
 {
@@ -50,6 +63,7 @@ int main(int argc, char* argv[])
     example2();
     example3();
     example4();
+    example5();
 
     return 0;
 }
