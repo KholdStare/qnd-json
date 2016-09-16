@@ -110,6 +110,8 @@ void example7()
         {"Key2", 42},
         {"Key3", json::Array{"hello", 1.618, json::null}}
     };
+
+    std::cout << obj << std::endl;
 }
 
 int main(int argc, char* argv[])
